@@ -83,6 +83,7 @@ func main() {
 	for scanner.Scan() {
 
 		cleanline := cleanuprrr(scanner.Text())
+
 		if reempty.MatchString(cleanline) && previousLineEmpty == true {
 			continue
 		} else if reempty.MatchString(cleanline) {

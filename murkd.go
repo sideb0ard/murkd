@@ -76,17 +76,13 @@ func main() {
 	}
 	defer markdownfile.Close()
 
-	var lines []string
-	scanner := bufio.NewScanner(markdownfile)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
 	reempty := regexp.MustCompile(`^\s*$`)
 	previousLineEmpty := false
 
-	for _, line := range lines {
-		cleanline := cleanuprrr(line)
+	scanner := bufio.NewScanner(markdownfile)
+	for scanner.Scan() {
+
+		cleanline := cleanuprrr(scanner.Text())
 		if reempty.MatchString(cleanline) && previousLineEmpty == true {
 			continue
 		} else if reempty.MatchString(cleanline) {
@@ -96,7 +92,6 @@ func main() {
 			fmt.Println(cleanline)
 			previousLineEmpty = false
 		}
-		//previousLineEmpty = false
 	}
 
 }

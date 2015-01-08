@@ -28,6 +28,10 @@ func RemoveMarkdownImages(str string) string {
 	return rehtml.ReplaceAllString(str, "")
 }
 
+func RemoveRegex(rex *regexp.Regexp, str string) string {
+	return rex.ReplaceAllString(str, "")
+}
+
 func HeaderToUpperBold(str string) string {
 	// change headers into upper case bold
 	reheaders := regexp.MustCompile(`^## (.*)`)
@@ -79,22 +83,39 @@ func main() {
 	reempty := regexp.MustCompile(`^\s*$`)
 	previousLineEmpty := false
 
+	rebackticks := regexp.MustCompile("^```")
+	backticksOn := false
+
 	scanner := bufio.NewScanner(markdownfile)
 	for scanner.Scan() {
 
 		cleanline := cleanuprrr(scanner.Text())
 
+		// multiline code block
+		if rebackticks.MatchString(cleanline) {
+			if backticksOn != true {
+				backticksOn = true
+				cleanline = RemoveRegex(rebackticks, cleanline)
+			} else {
+				backticksOn = false
+				cleanline = RemoveRegex(rebackticks, cleanline)
+			}
+		}
+		if backticksOn == true && len(cleanline) != 0 {
+			cleanline = Colorize("green", cleanline)
+		}
+
+		// reduce multiple consecutive lines to a single one
 		if reempty.MatchString(cleanline) && previousLineEmpty == true {
 			continue
 		} else if reempty.MatchString(cleanline) {
 			previousLineEmpty = true
-			fmt.Println(cleanline)
 		} else {
-			fmt.Println(cleanline)
 			previousLineEmpty = false
 		}
-	}
 
+		fmt.Println(cleanline)
+	}
 }
 
 //////////////////////////////////////////

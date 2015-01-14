@@ -10,12 +10,25 @@ import (
 	"github.com/mgutz/ansi"
 )
 
+const (
+	// TODO: creat config file to keep these in
+	CODECOLOR = "white"
+)
+
 func cleanuprrr(line string) string {
 	line = RemoveMarkUp(line)
+	line = RemoveListMarker(line)
 	line = RemoveMarkdownImages(line)
 	line = HeaderToUpperBold(line)
 	line = MarkdownHyperlinkToBold(line)
+	line = CodeSpanReplace(line)
+	line = Emphasis(line)
 	return line
+}
+
+func RemoveListMarker(str string) string {
+	relist := regexp.MustCompile(`^\s?\*\s`)
+	return relist.ReplaceAllString(str, "  ")
 }
 
 func RemoveMarkUp(str string) string {
@@ -32,20 +45,40 @@ func RemoveRegex(rex *regexp.Regexp, str string) string {
 	return rex.ReplaceAllString(str, "")
 }
 
+func Emphasis(str string) string {
+	// this is messy but only way i could think of without
+	// regex lookbehinds - otherwise this was replacing _underscore_
+	// parts of variable names, rather than on word boundary
+	// ( asterix don't count as a word character )
+	reemph := regexp.MustCompile(`([*_]+)([a-zA-Z\s'\."]+)([*_]+)`)
+	return reemph.ReplaceAllStringFunc(str, func(m string) string {
+		re := regexp.MustCompile(`([*_]+)([a-zA-Z\s'\."]+)([*_]+)(?:[^a-zA-Z])`)
+		parts := re.FindStringSubmatch(m)
+		if len(parts) > 1 {
+			return Colorize(CODECOLOR, parts[2])
+		} else {
+			return m
+		}
+	})
+}
+
+func CodeSpanReplace(str string) string {
+	respan := regexp.MustCompile("(`{1})([^`].*?)(`{1})")
+	return respan.ReplaceAllStringFunc(str, func(m string) string {
+		parts := respan.FindStringSubmatch(m)
+		return Colorize(CODECOLOR, parts[2])
+	})
+}
+
 func HeaderToUpperBold(str string) string {
-	// change headers into upper case bold
-	reheaders := regexp.MustCompile(`^## (.*)`)
-	str = reheaders.ReplaceAllStringFunc(str, func(m string) string {
+	reheaders := regexp.MustCompile(`^#+ (.*)`)
+	return reheaders.ReplaceAllStringFunc(str, func(m string) string {
 		parts := reheaders.FindStringSubmatch(m)
-		//return Bold(strings.ToUpper(parts[1]))
 		return Colorize("white", strings.ToUpper(parts[1]))
 	})
-
-	return str
 }
 
 func MarkdownHyperlinkToBold(str string) string {
-	// change MD hyperlinks into bold text
 	relynx := regexp.MustCompile(`\[(.*?)\]\(.*?\)`)
 	str = relynx.ReplaceAllStringFunc(str, func(m string) string {
 		parts := relynx.FindStringSubmatch(m)
@@ -54,7 +87,6 @@ func MarkdownHyperlinkToBold(str string) string {
 	return str
 }
 func Colorize(clr string, str string) string {
-	//lime := ansi.ColorCode("green+h:black")
 	clr = ansi.ColorCode(clr)
 	reset := ansi.ColorCode("reset")
 	return clr + str + reset
@@ -86,6 +118,13 @@ func main() {
 	rebackticks := regexp.MustCompile("^```")
 	backticksOn := false
 
+	recommentline := regexp.MustCompile("^//")
+	reheaderline := regexp.MustCompile(`^[=-]+$`)
+
+	// temp to hold previous line so we can catch headers
+	bufferline := "ignorefirsttime"
+	refirst := regexp.MustCompile("ignorefirsttime")
+
 	scanner := bufio.NewScanner(markdownfile)
 	for scanner.Scan() {
 
@@ -101,8 +140,8 @@ func main() {
 				cleanline = RemoveRegex(rebackticks, cleanline)
 			}
 		}
-		if backticksOn == true && len(cleanline) != 0 {
-			cleanline = Colorize("green", cleanline)
+		if backticksOn == true && len(cleanline) != 0 && !recommentline.MatchString(cleanline) {
+			cleanline = Colorize(CODECOLOR, cleanline)
 		}
 
 		// reduce multiple consecutive lines to a single one
@@ -114,7 +153,18 @@ func main() {
 			previousLineEmpty = false
 		}
 
-		fmt.Println(cleanline)
+		// buffer current in previous so we can check for header
+		if refirst.MatchString(bufferline) {
+			bufferline = cleanline
+			continue
+		}
+		if reheaderline.MatchString(cleanline) {
+			bufferline = Colorize("white", strings.ToUpper(bufferline))
+		}
+
+		fmt.Println(bufferline)
+		bufferline = cleanline
+
 	}
 }
 

@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	// TODO: creat config file to keep these in
 	CODECOLOR = "white"
 )
 

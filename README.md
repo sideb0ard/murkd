@@ -1,3 +1,7 @@
+
+Murkdown!
+=========
+
 super basic Golang markdown parser - murk it! 
 
 Removes most markdown syntax, giving clean, white and bold ANSI escaped console text.
@@ -18,6 +22,6 @@ Then to actually build or install murkdown, it's just:
 
 `git clone https://github.com/sideb0ard/murkdown.git` 
 
-then `go build` or `go install` it. (go build will leave the binary in your current dir, whereas go install puts it in your $GOPATH/bin)
+then cd into the murkdown dir and `go build` or `go install` it. (go build will leave the binary in your current dir, whereas go install puts it in your $GOPATH/bin)
 
 

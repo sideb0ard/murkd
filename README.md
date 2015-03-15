@@ -25,3 +25,12 @@ Then to actually build or install murkdown, it's just:
 then cd into the murkdown dir and `go build` or `go install` it. (go build will leave the binary in your current dir, whereas go install puts it in your $GOPATH/bin)
 
 
+To use, i recommend a wrapper function and alias in your bashrc:
+
+`murkdownFunc() {`
+`  murkdown $1 | less`
+`}`
+`alias md=murkdownFunc`
+
+
+

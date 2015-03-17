@@ -28,7 +28,7 @@ then cd into the murkdown dir and `go build` or `go install` it. (go build will 
 To use, i recommend a wrapper function and alias in your bashrc:
 
 `murkdownFunc() {`
-`  murkdown $1 | less`
+`  murkdown $1 | less -R`
 `}`
 `alias md=murkdownFunc`
 
